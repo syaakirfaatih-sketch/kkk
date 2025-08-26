@@ -1,0 +1,602 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SCI-FI Quiz Brawl</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: #121a35;
+      --accent: #66e0ff;
+      --accent2: #7fff7a;
+      --accent3: #ff7af6;
+      --text: #e8f3ff;
+      --muted: #9fb6d1;
+      --danger: #ff6b6b;
+      --warning: #ffd166;
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 80% -10%, #1a2458 0%, rgba(26,36,88,0) 60%), radial-gradient(900px 500px at 10% 120%, #112a52 0%, rgba(17,42,82,0) 60%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    .wrap{
+      width: min(980px, 92vw);
+      margin: 24px auto;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.0));
+      border: 1px solid rgba(102,224,255,0.2);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.35), inset 0 0 40px rgba(102,224,255,0.05);
+      border-radius: 18px;
+      padding: 20px;
+      backdrop-filter: blur(6px);
+    }
+    h1{
+      font-size: clamp(26px, 4vw, 38px);
+      margin: 0 0 6px;
+      letter-spacing: 0.3px;
+    }
+    .sub{
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .grid{
+      display:grid;
+      gap: 16px;
+    }
+    .grid-2{ grid-template-columns: repeat(2,1fr); }
+    .grid-3{ grid-template-columns: repeat(3,1fr); }
+    .center{ text-align:center; }
+    .btn{
+      border: 1px solid rgba(102,224,255,0.35);
+      background: linear-gradient(180deg, rgba(10,16,42,0.9), rgba(6,10,30,0.9));
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s ease;
+      box-shadow: 0 6px 16px rgba(0,0,0,.3);
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+    .btn.accent{ border-color: rgba(127,255,122,0.5); box-shadow: 0 10px 24px rgba(127,255,122,0.2); }
+    .btn.warn{ border-color: rgba(255,209,102,0.6); }
+    .pill{ font-size: 12px; padding: 6px 10px; border-radius: 999px; color: #061126; background: var(--accent); display:inline-block; }
+    .tag{ font-size: 12px; padding: 4px 8px; border-radius: 999px; border:1px solid rgba(255,255,255,.08); color: var(--muted); }
+    .bar{
+      width:100%; height: 12px; border-radius: 999px; background:#0a1430; border:1px solid rgba(255,255,255,.08); overflow:hidden;
+    }
+    .bar > div{ height:100%; transition: width .35s ease; }
+    .hp{ background: linear-gradient(90deg, #9af5a2, #39ffb3); }
+    .en{ background: linear-gradient(90deg, #7ecbff, #66e0ff); }
+    .dmg{ color: var(--danger); font-weight: 800; }
+    .gain{ color: var(--accent2); font-weight: 800; }
+    .box{
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .char{
+      display:flex; align-items:center; gap: 12px; padding: 12px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor:pointer; transition: transform .08s ease, border-color .2s ease, background .2s ease;
+    }
+    .char:hover{ transform: translateY(-2px); border-color: rgba(102,224,255,0.4); background: rgba(102,224,255,0.05); }
+    .char.active{ border-color: var(--accent); box-shadow: 0 0 0 2px rgba(102,224,255,0.2) inset; }
+    .char-emoji{ font-size: 32px; }
+    .muted{ color: var(--muted); }
+    .row{ display:flex; align-items:center; justify-content: space-between; gap: 14px; }
+    .stack{ display:flex; align-items:center; gap: 8px; flex-wrap:wrap; }
+    .qbox{
+      padding: 16px; border-radius: 16px;
+      background: linear-gradient(180deg, rgba(127,255,122,0.06), rgba(102,224,255,0.04));
+      border: 1px solid rgba(127,255,122,0.25);
+    }
+    .answers{ display:grid; gap: 10px; margin-top: 12px; }
+    .answers button{ text-align:left; }
+    .toast{
+      position: fixed; inset: auto 16px 16px auto; background: #122044; border: 1px solid rgba(255,255,255,.1);
+      padding: 10px 12px; border-radius: 12px; color: var(--text); box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      display:none;
+    }
+    .floating{
+      position: absolute; pointer-events: none; font-weight: 900; text-shadow: 0 2px 6px rgba(0,0,0,.3);
+      animation: floatUp .8s ease-out forwards;
+    }
+    @keyframes floatUp{
+      0%{ transform: translateY(0); opacity: 1; }
+      100%{ transform: translateY(-26px); opacity: 0; }
+    }
+    .footer{
+      opacity: .7; font-size: 12px; text-align: center; margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap card">
+    <div class="row">
+      <div>
+        <h1>⚡ SCI-FI Quiz Brawl</h1>
+        <div class="sub">Jawab kuis untuk menyerang. Kalahkan bos untuk naik level & upgrade!</div>
+        <div class="stack">
+          <span class="tag" id="seasonTag">Season 1</span>
+          <span class="tag">Mode: Kuis + Battle</span>
+          <span class="tag">Single Player</span>
+        </div>
+      </div>
+      <div class="stack">
+        <button class="btn" id="btnHow">Cara Main</button>
+        <button class="btn accent" id="btnReset">Reset</button>
+      </div>
+    </div>
+
+    <div id="screenSelect" class="grid grid-3" style="margin-top:16px;">
+      <!-- Character select -->
+    </div>
+
+    <div id="screenBattle" style="display:none; margin-top: 10px;">
+      <div class="grid grid-2">
+        <div class="box">
+          <div class="row">
+            <div class="stack">
+              <div class="char-emoji" id="pEmoji">🤖</div>
+              <div>
+                <div><strong id="pName">CYBR-01</strong> <span class="pill" id="pLvl">Lv 1</span></div>
+                <div class="muted" id="pClass">Cyborg</div>
+              </div>
+            </div>
+            <div style="min-width:180px;">
+              <div class="muted">HP</div>
+              <div class="bar"><div id="pHPBar" class="hp" style="width:100%"></div></div>
+              <div class="muted" id="pHPText">100/100</div>
+            </div>
+          </div>
+          <div class="grid" style="margin-top: 12px;">
+            <div class="row box">
+              <div>ATK</div><div><strong id="pATK">10</strong></div>
+            </div>
+            <div class="row box">
+              <div>DEF</div><div><strong id="pDEF">4</strong></div>
+            </div>
+            <div class="row box">
+              <div>ENERGI</div>
+              <div style="min-width:180px;">
+                <div class="bar"><div id="pENBar" class="en" style="width:100%"></div></div>
+                <div class="muted" id="pENText">100/100</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="row">
+            <div class="stack">
+              <div class="char-emoji" id="eEmoji">👾</div>
+              <div>
+                <div><strong id="eName">Alien Boss</strong> <span class="pill" id="stageTag">Stage 1</span></div>
+                <div class="muted" id="eClass">Xenomorph</div>
+              </div>
+            </div>
+            <div style="min-width:180px;">
+              <div class="muted">HP</div>
+              <div class="bar"><div id="eHPBar" class="hp" style="width:100%"></div></div>
+              <div class="muted" id="eHPText">100/100</div>
+            </div>
+          </div>
+          <div class="grid" style="margin-top: 12px;">
+            <div class="row box">
+              <div>ATK</div><div><strong id="eATK">8</strong></div>
+            </div>
+            <div class="row box">
+              <div>DEF</div><div><strong id="eDEF">3</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top: 16px;">
+        <div class="qbox">
+          <div class="row">
+            <div>
+              <div class="pill">Pertanyaan</div>
+              <div id="qText" style="font-weight:800; font-size: 18px; margin-top:6px;">...</div>
+            </div>
+            <div class="stack">
+              <div class="tag">Sisa Soal: <span id="qLeft">0</span></div>
+              <div class="tag">Combo: <span id="qCombo">0</span>x</div>
+            </div>
+          </div>
+          <div class="answers" id="answers"></div>
+        </div>
+
+        <div class="row">
+          <div class="stack">
+            <button class="btn warn" id="btnAbility">🔥 Kemampuan (20 EN)</button>
+            <span class="muted">• Jawab benar = serang, salah = musuh balik.</span>
+          </div>
+          <div class="stack">
+            <button class="btn" id="btnUpgrade" disabled>Upgrade (antar ronde)</button>
+            <button class="btn accent" id="btnNext" disabled>Ronde Berikutnya</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Dibuat tanpa library eksternal. Edit bank soal & karakter di dalam file .html ini.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script>
+  const $ = (id)=>document.getElementById(id);
+  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+  // --- DATA ---
+  const characters = [
+    { id:'cybr', name:'CYBR-01', emoji:'🤖', cls:'Cyborg', base:{ hp:120, atk:12, def:4, en:100 }, ability:{ name:'Overclock', desc:'Serangan berikutnya +50% ATK', type:'buff', cost:20 } },
+    { id:'zent', name:'ZENT-9', emoji:'👨‍🚀', cls:'Space Marine', base:{ hp:100, atk:14, def:3, en:100 }, ability:{ name:'Plasma Grenade', desc:'Deal 20 true damage', type:'nuke', cost:20 } },
+    { id:'drn',  name:'DRN-Ω', emoji:'🛰️', cls:'Drone AI', base:{ hp:90,  atk:10, def:2, en:120 }, ability:{ name:'Hack Shield', desc:'Dapat 30 Shield (sementara)', type:'shield', cost:20 } },
+  ];
+
+  const stages = [
+    { name:'Alien Grunt', emoji:'👾', cls:'Xenomorph', hp:80,  atk:8,  def:2 },
+    { name:'Rogue Bot',   emoji:'🤖', cls:'Android',    hp:110, atk:10, def:3 },
+    { name:'Void Warden', emoji:'🧟‍♂️', cls:'Mutant',    hp:140, atk:12, def:4 },
+    { name:'Nebula King', emoji:'👑', cls:'Overlord',   hp:180, atk:14, def:5 },
+  ];
+
+  // Example question bank (mix of sci-fi facts & math/logic)
+  const questionBank = [
+    { q:'Planet ke-4 dari Matahari adalah?', a:['Bumi','Venus','Mars','Jupiter'], correct:2 },
+    { q:'Biner dari angka 5 adalah?', a:['101','110','111','100'], correct:0 },
+    { q:'Hasil 12 × 8 = ?', a:['80','88','96','108'], correct:2 },
+    { q:'Nama galaksi tempat Bumi berada?', a:['Andromeda','Milky Way','Sombrero','Triangulum'], correct:1 },
+    { q:'Kecepatan cahaya ~?', a:['3×10^8 m/s','3×10^6 m/s','3×10^5 m/s','3×10^4 m/s'], correct:0 },
+    { q:'Bahasa pemrograman untuk web interaktif?', a:['HTML','CSS','JavaScript','SQL'], correct:2 },
+    { q:'Bilangan prima berikut:', a:['21','27','29','33'], correct:2 },
+    { q:'2^5 = ?', a:['16','32','64','128'], correct:1 },
+    { q:'Ibu kota Indonesia?', a:['Jakarta','Bandung','Surabaya','Medan'], correct:0 },
+    { q:'Logika: jika A benar dan B salah, A && B = ?', a:['true','false'], correct:1, a2:true },
+  ];
+
+  // --- STATE ---
+  const state = {
+    player:null,
+    enemy:null,
+    p:{ maxHP:0, hp:0, atk:0, def:0, en:0, maxEN:0, lvl:1, shield:0, buff:false },
+    e:{ maxHP:0, hp:0, atk:0, def:0 },
+    round:1,
+    stageIndex:0,
+    deck:[],
+    combo:0,
+    answering:false,
+  };
+
+  // --- UI HELPERS ---
+  function toast(msg){
+    const t = $('toast');
+    t.textContent = msg;
+    t.style.display='block';
+    setTimeout(()=>t.style.display='none', 1400);
+  }
+  function setHPBars(){
+    $('pHPBar').style.width = Math.max(0, (state.p.hp+state.p.shield)/ (state.p.maxHP+Math.max(0,state.p.shield)) * 100) + '%';
+    $('pHPText').textContent = Math.max(0,Math.floor(state.p.hp)) + '/' + state.p.maxHP + (state.p.shield>0?` (+${state.p.shield} shield)`:'');
+    $('eHPBar').style.width = Math.max(0, state.e.hp/state.e.maxHP*100) + '%';
+    $('eHPText').textContent = Math.max(0,Math.floor(state.e.hp)) + '/' + state.e.maxHP;
+  }
+  function setENBars(){
+    $('pENBar').style.width = Math.max(0, state.p.en/state.p.maxEN*100) + '%';
+    $('pENText').textContent = Math.floor(state.p.en) + '/' + state.p.maxEN;
+  }
+  function updateStats(){
+    $('pATK').textContent = state.p.atk;
+    $('pDEF').textContent = state.p.def;
+    $('eATK').textContent = state.e.atk;
+    $('eDEF').textContent = state.e.def;
+    $('pLvl').textContent = 'Lv ' + state.p.lvl;
+    $('stageTag').textContent = 'Stage ' + (state.stageIndex+1);
+    $('qLeft').textContent = state.deck.length;
+    $('qCombo').textContent = state.combo;
+  }
+  function floatText(el, text, cls=''){
+    const r = el.getBoundingClientRect();
+    const ft = document.createElement('div');
+    ft.className = 'floating ' + cls;
+    ft.style.left = (r.left + r.width/2) + 'px';
+    ft.style.top = (window.scrollY + r.top + 10) + 'px';
+    ft.textContent = text;
+    document.body.appendChild(ft);
+    setTimeout(()=>ft.remove(), 900);
+  }
+
+  // --- FLOW ---
+  function renderSelect(){
+    const cont = $('screenSelect');
+    cont.innerHTML = '';
+    characters.forEach((c,idx)=>{
+      const div = document.createElement('div');
+      div.className = 'char';
+      div.innerHTML = `
+        <div class="char-emoji">${c.emoji}</div>
+        <div style="flex:1;">
+          <div><strong>${c.name}</strong> <span class="tag">${c.cls}</span></div>
+          <div class="muted">HP ${c.base.hp} • ATK ${c.base.atk} • DEF ${c.base.def} • EN ${c.base.en}</div>
+          <div class="muted"><span class="pill">${c.ability.name}</span> — ${c.ability.desc}</div>
+        </div>
+        <button class="btn">Pilih</button>
+      `;
+      div.querySelector('.btn').onclick = ()=>pickCharacter(idx, div);
+      cont.appendChild(div);
+    });
+  }
+
+  function pickCharacter(idx, node){
+    document.querySelectorAll('.char').forEach(el=>el.classList.remove('active'));
+    node.classList.add('active');
+    const c = characters[idx];
+    state.player = c;
+    $('pEmoji').textContent = c.emoji;
+    $('pName').textContent = c.name;
+    $('pClass').textContent = c.cls;
+    Object.assign(state.p, {
+      maxHP: c.base.hp, hp: c.base.hp, atk: c.base.atk, def:c.base.def,
+      en: c.base.en, maxEN:c.base.en, shield:0, buff:false, lvl:1
+    });
+    setHPBars(); setENBars(); updateStats();
+    toast('Karakter dipilih! Klik "Ronde Berikutnya" untuk mulai.');
+    $('btnNext').disabled = false;
+  }
+
+  function startStage(){
+    if(!state.player){ toast('Pilih karakter dulu!'); return; }
+    $('screenSelect').style.display='none';
+    $('screenBattle').style.display='block';
+    const st = stages[state.stageIndex % stages.length];
+    $('eEmoji').textContent = st.emoji;
+    $('eName').textContent = st.name;
+    $('eClass').textContent = st.cls;
+
+    const scale = 1 + (state.stageIndex*0.25);
+    const eHP = Math.floor(st.hp*scale);
+    state.enemy = st;
+    Object.assign(state.e, { maxHP:eHP, hp:eHP, atk:Math.floor(st.atk*scale), def:Math.floor(st.def*scale) });
+    buildDeck();
+    updateStats(); setHPBars(); setENBars();
+    nextQuestion();
+  }
+
+  function buildDeck(){
+    // pick 6 random questions each stage
+    const pool = [...questionBank];
+    const deck = [];
+    for(let i=0;i<6;i++){
+      const n = rand(0,pool.length-1);
+      deck.push(pool.splice(n,1)[0]);
+    }
+    state.deck = deck;
+    $('qLeft').textContent = deck.length;
+  }
+
+  function nextQuestion(){
+    if(state.deck.length===0){
+      // Stage clear => allow upgrade & next round
+      $('btnUpgrade').disabled = false;
+      $('btnNext').disabled = false;
+      $('answers').innerHTML = '';
+      $('qText').textContent = 'Stage bersih! Ambil upgrade sebelum lanjut.';
+      return;
+    }
+    const q = state.deck.shift();
+    $('qLeft').textContent = state.deck.length;
+    $('qText').textContent = q.q;
+    const answers = $('answers');
+    answers.innerHTML = '';
+    const opts = q.a.map((txt,i)=>({i,txt}));
+    // shuffle
+    for(let i=opts.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [opts[i],opts[j]] = [opts[j],opts[i]]; }
+    opts.forEach(o=>{
+      const b = document.createElement('button');
+      b.className='btn';
+      b.textContent = o.txt;
+      b.onclick = ()=>answer(o.i===q.correct);
+      answers.appendChild(b);
+    });
+    state.answering = true;
+  }
+
+  function calcDamage(attacker, defender, base){
+    // simplified: damage = max(1, (atk + base) - def) with combo bonus
+    const comboBonus = 1 + Math.min(0.5, state.combo*0.06); // up to +50%
+    const buff = (attacker==='p' && state.p.buff) ? 1.5 : 1;
+    const raw = ( (attacker==='p'?state.p.atk:state.e.atk) + base ) * comboBonus * buff;
+    const dmg = Math.max(1, Math.round(raw - (attacker==='p'?state.e.def:state.p.def)));
+    if(attacker==='p'){ state.p.buff = false; }
+    return dmg;
+  }
+
+  function answer(correct){
+    if(!state.answering) return;
+    state.answering=false;
+    const base = correct ? 6 : 0;
+    if(correct){
+      state.combo++;
+      const dmg = calcDamage('p','e', base);
+      state.e.hp -= dmg;
+      floatText($('eEmoji'), `-${dmg}`, 'dmg');
+      if(state.e.hp<=0){
+        state.e.hp = 0;
+        setHPBars();
+        toast('🎉 Bos K.O.!');
+        $('answers').innerHTML = '';
+        $('qText').textContent = 'Stage bersih! Ambil upgrade sebelum lanjut.';
+        $('btnUpgrade').disabled = false;
+        $('btnNext').disabled = false;
+        return;
+      } else {
+        setHPBars();
+        // enemy counter?
+        if(Math.random()<0.35){
+          enemyAttack();
+        }
+        nextQuestion();
+      }
+    } else {
+      state.combo = 0;
+      // enemy attacks player
+      enemyAttack(true);
+      if(state.p.hp<=0){
+        gameOver();
+        return;
+      }
+      nextQuestion();
+    }
+    updateStats();
+  }
+
+  function enemyAttack(force=false){
+    const dmg = calcDamage('e','p', force?5:2);
+    // apply shield first
+    if(state.p.shield>0){
+      const used = Math.min(state.p.shield, dmg);
+      state.p.shield -= used;
+      const leftover = dmg - used;
+      if(leftover>0) state.p.hp -= leftover;
+    } else {
+      state.p.hp -= dmg;
+    }
+    floatText($('pEmoji'), `-${dmg}`, 'dmg');
+    if(state.p.hp<=0){
+      state.p.hp=0;
+    }
+    setHPBars();
+  }
+
+  function gameOver(){
+    $('answers').innerHTML = '';
+    $('qText').textContent = '💀 Kamu K.O. — klik Reset untuk mengulang.';
+    $('btnNext').disabled = true;
+    $('btnUpgrade').disabled = true;
+  }
+
+  function ability(){
+    if(!state.player) return;
+    const ab = state.player.ability;
+    if(state.p.en < ab.cost){ toast('Energi tidak cukup!'); return; }
+    state.p.en -= ab.cost;
+    if(ab.type==='buff'){
+      state.p.buff = true;
+      toast('Overclock aktif: Serangan berikutnya +50% ATK!');
+    } else if(ab.type==='nuke'){
+      const trueDmg = 20;
+      state.e.hp -= trueDmg;
+      floatText($('eEmoji'), `-${trueDmg}`, 'dmg');
+      if(state.e.hp<=0){ state.e.hp=0; toast('BOOM! Bos K.O.'); }
+    } else if(ab.type==='shield'){
+      state.p.shield += 30;
+      floatText($('pEmoji'), `+Shield 30`, 'gain');
+    }
+    setENBars(); setHPBars();
+    if(state.e.hp<=0){
+      $('answers').innerHTML = '';
+      $('qText').textContent = 'Stage bersih! Ambil upgrade sebelum lanjut.';
+      $('btnUpgrade').disabled = false;
+      $('btnNext').disabled = false;
+    }
+  }
+
+  function upgrade(){
+    // offer 3 random upgrades
+    const ups = [
+      { name:'+10 ATK', act:()=>state.p.atk+=10 },
+      { name:'+6 DEF',  act:()=>state.p.def+=6 },
+      { name:'+25 Max HP', act:()=>{ state.p.maxHP+=25; state.p.hp+=25; } },
+      { name:'+25 Energi', act:()=>{ state.p.maxEN+=25; state.p.en+=25; } },
+      { name:'Vampiric (+8 heal saat benar)', act:()=>{ state._vamp = (state._vamp||0)+8; } },
+      { name:'Spikes (balik 5 dmg ke musuh saat salah)', act:()=>{ state._spike = (state._spike||0)+5; } },
+    ];
+    const pick = [];
+    const pool = [...ups];
+    for(let i=0;i<3;i++){ const n=rand(0,pool.length-1); pick.push(pool.splice(n,1)[0]); }
+    const answers = $('answers');
+    $('qText').textContent = 'Pilih 1 upgrade:';
+    answers.innerHTML = '';
+    pick.forEach(up=>{
+      const b = document.createElement('button');
+      b.className='btn';
+      b.textContent = up.name;
+      b.onclick = ()=>{
+        up.act();
+        toast('Upgrade diambil: '+up.name);
+        $('btnUpgrade').disabled = true;
+        updateStats(); setHPBars(); setENBars();
+      };
+      answers.appendChild(b);
+    });
+  }
+
+  function nextRound(){
+    if(!$('btnUpgrade').disabled){
+      toast('Ambil upgrade dulu!');
+      return;
+    }
+    state.stageIndex++;
+    state.round++;
+    state.p.lvl++;
+    // restore sebagian
+    state.p.hp = Math.min(state.p.maxHP, state.p.hp + Math.floor(state.p.maxHP*0.4));
+    state.p.en = Math.min(state.p.maxEN, state.p.en + 30);
+    state.combo = 0;
+    updateStats(); setHPBars(); setENBars();
+    startStage();
+    $('btnNext').disabled = true;
+  }
+
+  function resetGame(){
+    state.player=null;
+    state.enemy=null;
+    state.stageIndex=0;
+    state.round=1;
+    state.combo=0;
+    state._vamp=0; state._spike=0;
+    $('screenBattle').style.display='none';
+    $('screenSelect').style.display='grid';
+    renderSelect();
+    $('btnNext').disabled = true;
+    $('btnUpgrade').disabled = true;
+    $('qText').textContent = '...';
+    $('answers').innerHTML = '';
+  }
+
+  // tie-ins
+  $('btnNext').onclick = nextRound;
+  $('btnReset').onclick = resetGame;
+  $('btnUpgrade').onclick = upgrade;
+  $('btnAbility').onclick = ability;
+  $('btnHow').onclick = ()=>{
+    alert('Jawab kuis untuk menyerang musuh. Jawaban salah, musuh menyerang kamu.\nGunakan Kemampuan (20 Energi).\nSetiap stage selesai, pilih 1 upgrade.\nTujuan: Bertahan sejauh mungkin!');
+  };
+
+  // little hooks for vamp/spike effects
+  const _origAnswer = answer;
+  answer = function(correct){
+    if(correct && state._vamp){ state.p.hp = Math.min(state.p.maxHP, state.p.hp + state._vamp); floatText($('pEmoji'), `+${state._vamp}`, 'gain'); setHPBars(); }
+    if(!correct && state._spike){ state.e.hp = Math.max(0, state.e.hp - state._spike); floatText($('eEmoji'), `-${state._spike}`, 'dmg'); setHPBars(); }
+    _origAnswer(correct);
+  }
+
+  // Init
+  renderSelect();
+  </script>
+</body>
+</html>
